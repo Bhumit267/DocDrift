@@ -228,9 +228,9 @@ def generate_suggestions_endpoint(
         
         org_id = current_user["org_id"]
         
-        where_clause = {"org_id": {"$eq": org_id}}
+        where_clause = {"org_id": org_id}
         if version:
-            where_clause["version"] = {"$eq": version}
+            where_clause["version"] = version
 
         vectorstore = get_pgvector_store(get_embedding_model())
         

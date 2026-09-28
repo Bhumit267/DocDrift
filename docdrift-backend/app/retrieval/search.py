@@ -17,21 +17,18 @@ def build_pgvector_filter(
     org_id: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
     """Builds a Langchain PGVector compatible 'where' filter dictionary."""
-    conditions: List[Dict[str, Any]] = []
+    conditions: Dict[str, Any] = {}
 
     if version:
-        conditions.append({"version": {"$eq": version}})
+        conditions["version"] = version
     if doc_type:
-        conditions.append({"doc_type": {"$eq": doc_type}})
+        conditions["doc_type"] = doc_type
     if org_id:
-        conditions.append({"org_id": {"$eq": org_id}})
+        conditions["org_id"] = org_id
 
     if not conditions:
         return None
-    elif len(conditions) == 1:
-        return conditions[0]
-    else:
-        return {"$and": conditions}
+    return conditions
 
 
 def search(

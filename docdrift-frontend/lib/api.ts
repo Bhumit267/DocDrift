@@ -163,6 +163,10 @@ export async function getVersions(): Promise<string[]> {
   }
 
   if (!response.ok) {
+    if (response.status === 401) {
+      authLogout();
+      return [];
+    }
     let errorDetail = `HTTP ${response.status} ${response.statusText}`;
     try {
       const errorJson = await response.json();

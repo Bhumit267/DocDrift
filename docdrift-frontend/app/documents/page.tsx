@@ -4,13 +4,14 @@ import React, { useEffect, useState, useMemo } from 'react';
 import Navigation from '@/components/Navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Document } from '@/lib/types';
-import { getDocuments, getDocumentDownloadUrl } from '@/lib/api';
+import { getDocuments, getDocumentDownloadUrl, getCurrentUser } from '@/lib/api';
 import Link from 'next/link';
 
 export default function DocumentsPage() {
   const [docs, setDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<{ email: string; role: string; org_id: string | null; org_name: string | null } | null>(null);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,20 +19,26 @@ export default function DocumentsPage() {
   const [selectedVersion, setSelectedVersion] = useState('all');
 
   useEffect(() => {
-    async function loadDocs() {
+    async function loadData() {
       setLoading(true);
       setError(null);
       try {
-        const data = await getDocuments();
-        setDocs(data);
+        const [userData, docsData] = await Promise.all([
+          getCurrentUser(),
+          getDocuments()
+        ]);
+        if (userData) {
+          setUser(userData);
+        }
+        setDocs(docsData);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Failed to retrieve documents');
+        setError(err instanceof Error ? err.message : 'Failed to retrieve data');
       } finally {
         setLoading(false);
       }
     }
 
-    loadDocs();
+    loadData();
   }, []);
 
   // Compute unique types and versions for filter dropdowns
@@ -84,24 +91,26 @@ export default function DocumentsPage() {
 
           <div className="flex items-center gap-3">
             {/* Upload Button */}
-            <Link
-              href="/admin/upload"
-              className="rounded-lg border border-study-border dark:border-study-border-dark bg-[#F5EFE4] dark:bg-[#1A1F1A] px-3.5 py-1.5 text-xs font-mono text-primary dark:text-[#EDE7D9] hover:border-accent focus:border-accent cursor-pointer flex items-center gap-1.5 shadow-2xs transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-3.5 w-3.5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+            {user?.role !== 'employee' && (
+              <Link
+                href="/admin/upload"
+                className="rounded-lg border border-study-border dark:border-study-border-dark bg-[#F5EFE4] dark:bg-[#1A1F1A] px-3.5 py-1.5 text-xs font-mono text-primary dark:text-[#EDE7D9] hover:border-accent focus:border-accent cursor-pointer flex items-center gap-1.5 shadow-2xs transition-colors"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span>Upload document</span>
-            </Link>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3.5 w-3.5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>Upload document</span>
+              </Link>
+            )}
           </div>
         </header>
 
